@@ -50,7 +50,7 @@ func main() {
 	r.Post("/tasks", postTasks)
 	r.Get("/tasks/{id}", getTask)
 	r.Delete("/tasks/{id}", deleteTask)
-	if err := http.ListenAndServe(":7070", r); err != nil {
+	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
 		return
 	}
