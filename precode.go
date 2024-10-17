@@ -56,79 +56,90 @@ func main() {
 	}
 }
 
-func getTasks(w http.ResponseWriter, r *http.Request){
+func getTasks(w http.ResponseWriter, r *http.Request) {
 	resp, err := json.Marshal(tasks)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-    // в заголовок записываем тип контента, у нас это данные в формате JSON
-    w.Header().Set("Content-Type", "application/json")
-    // так как все успешно, то статус OK
-    w.WriteHeader(http.StatusOK)
-    // записываем сериализованные в JSON данные в тело ответа
-    w.Write(resp)
+	// в заголовок записываем тип контента, у нас это данные в формате JSON
+	w.Header().Set("Content-Type", "application/json")
+	// так как все успешно, то статус OK
+	w.WriteHeader(http.StatusOK)
+	// записываем сериализованные в JSON данные в тело ответа
+	_, err = w.Write(resp)
+	if err != nil {
+		fmt.Println("Ошибка при отправке ответа")
+	}
 }
 
 func postTasks(w http.ResponseWriter, r *http.Request) {
 	var task Task
-    var buf bytes.Buffer
+	var buf bytes.Buffer
 
-    _, err := buf.ReadFrom(r.Body)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
+	_, err := buf.ReadFrom(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-    if err = json.Unmarshal(buf.Bytes(), &task); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
+	if err = json.Unmarshal(buf.Bytes(), &task); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-    tasks[task.ID] = task
+	if _, existsTask := tasks[task.ID]; existsTask {
+		http.Error(w, "Такая задача уже есть", http.StatusBadRequest)
+		return
+	}
 
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusCreated)
+	tasks[task.ID] = task
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 }
 
 func getTask(w http.ResponseWriter, r *http.Request) {
-    id := chi.URLParam(r, "id")
+	id := chi.URLParam(r, "id")
 
-    task, ok := tasks[id]
-    if !ok {
-        http.Error(w, "Задача не найдена", http.StatusOK)
-        return
-    }
-	fmt.Println(task)
-    resp, err := json.Marshal(task)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
+	task, ok := tasks[id]
+	if !ok {
+		http.Error(w, "Задача не найдена", http.StatusOK)
+		return
+	}
 
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusOK)
-    w.Write(resp)
-} 
+	resp, err := json.Marshal(task)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(resp)
+	if err != nil {
+		fmt.Println("Ошибка при отправке ответа")
+	}
+}
 
 func deleteTask(w http.ResponseWriter, r *http.Request) {
-    id := chi.URLParam(r, "id")
-    task, ok := tasks[id]
-    if !ok {
-        http.Error(w, "Задача не удалена, так как ее не было", http.StatusOK)
-        return
-    }
+	id := chi.URLParam(r, "id")
+	task, ok := tasks[id]
+	if !ok {
+		http.Error(w, "Задача не удалена, так как ее не было", http.StatusOK)
+		return
+	}
 
 	delete(tasks, id)
-	
-    resp, err := json.Marshal(task)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
 
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusOK)
-    w.Write(resp)
-} 
+	_, err := json.Marshal(task)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+}
