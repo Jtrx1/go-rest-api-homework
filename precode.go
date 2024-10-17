@@ -125,19 +125,13 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 
 func deleteTask(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	task, ok := tasks[id]
+	_, ok := tasks[id]
 	if !ok {
 		http.Error(w, "Задача не удалена, так как ее не было", http.StatusOK)
 		return
 	}
 
 	delete(tasks, id)
-
-	_, err := json.Marshal(task)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
